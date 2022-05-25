@@ -1,0 +1,49 @@
+version: 2.1 
+jobs:
+  build:
+    docker:
+      - image: cimg/base:2022.04
+    steps:
+      - run:
+          name: Build Android App
+          command: echo "Building......"
+      - run:
+          name: Fail the build
+          command: echo "Simulate build failure." && false
+      - run:
+          name: Store Results in Workspace
+          command: echo "Store the results somewhere."
+          when: always
+      - run:
+          name: Approve the Manual Approval Job
+          command: |
+            export APPROVAL_JOB_ID=$(curl --request GET --url "https://circleci.com/api/v2/workflow/${CIRCLE_WORKFLOW_ID}/job" --header "Circle-Token: ${CIRCLE_TOKEN}" | jq -r '.items[] | select(.name == "Approval Needed for Uploading Results") | .id')
+            curl --request POST "https://circleci.com/api/v2/workflow/${CIRCLE_WORKFLOW_ID}/approve/${APPROVAL_JOB_ID}" --header "Circle-Token: ${CIRCLE_TOKEN}"
+          when: always
+
+  upload_results:
+    machine: true
+    resource_class: crowley-namespace/runner-demo
+    steps:
+      - run:
+          name: Persist Workspace with Results
+          command: echo "Attach Workspace......"
+      - run:
+          name: Upload Results to Internal Repository
+          command: echo "Uploading......"
+
+
+
+
+workflows:
+  main:
+    jobs:
+      - build:
+          name: "Build Android App via Gradle"
+      - manual-approval:
+          name: "Approval Needed for Uploading Results"
+          type: approval
+      - upload_results:
+          name: "Upload Android App Build Logs"
+          requires:
+            - "Approval Needed for Uploading Results"
