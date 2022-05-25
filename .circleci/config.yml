@@ -23,7 +23,7 @@ jobs:
 
   upload_results:
     machine: true
-    resource_class: crowley-namespace/runner-demo
+    resource_class: crowley-namespace/mind-the-gap
     steps:
       - run:
           name: Persist Workspace with Results
