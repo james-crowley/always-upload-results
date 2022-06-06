@@ -80,6 +80,7 @@ commands:
             for job_name in ${job_list//,/ }
             do
               current_wait_time=0
+              echo "Current Job Checking: ${job_name}"
 
               while true; do
                 get_job_status
@@ -129,8 +130,8 @@ jobs:
           name: Build Android App
           command: echo "Building......"
       - run:
-          name: Fail the build
-          command: echo "Simulate build failure." && false
+          name: Sleeping for 60 secs
+          command: echo "Sleeping for 60 secs" && sleep 60
       - run:
           name: Store Results in Workspace
           command: echo "Store the results somewhere."
