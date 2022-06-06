@@ -140,10 +140,8 @@ jobs:
     machine: true
     resource_class: crowley-namespace/mind-the-gap
     steps:
-      - run:
-          name: Poll for jobs
-          wait_for_jobs:
-            job-names: "build_1,build_2"
+      - wait_for_jobs:
+          job-names: "build_1,build_2"
       - run:
           name: Persist Workspace with Results
           command: echo "Attach Workspace......"
@@ -152,9 +150,7 @@ jobs:
           command: echo "Uploading......"
 
 
-
-
-workflows:a
+workflows:
   main:
     jobs:
       - build_1
