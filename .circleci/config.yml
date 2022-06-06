@@ -77,7 +77,7 @@ commands:
 
             job_list="<< parameters.job-names >>"
 
-            for i in ${job_list//,/ }
+            for job_name in ${job_list//,/ }
             do
               current_wait_time=0
 
