@@ -1,6 +1,112 @@
 version: 2.1 
+
+commands:
+  wait_for_jobs:
+    parameters:
+      job-names:
+        description: A list jobs on which to wait. The list needs to be comma separated
+        type: string
+      kill-gracefully:
+        default: 'true'
+        description: >-
+          If true and time exceeds max wait time, completes and lets future steps
+          continue
+        type: string
+      max-wait-time:
+        default: '1800'
+        description: |
+          The max wait time in seconds a job should wait for before killing itself.
+        type: string
+      run-on-branch:
+        default: '*'
+        description: >
+          The branches to actually wait on. By default this waits on all branches.
+          If set to anything but
+
+          '*' the wait will run only on the specified branch
+        type: string
+      sleep-time-between-checks:
+        default: '30'
+        description: How long to sleep between checks.
+        type: string
+    steps:
+      - run:
+          name: Poll for Jobs
+          command: |
+            if [ -z "$BASH" ]; then
+              echo Bash not installed.
+              exit 1
+            fi
+
+            hash jq 2>/dev/null || { echo >&2 "jq is not installed.  Aborting.";
+            exit 1; }
+
+            if [[ "$CIRCLE_TOKEN" == "" ]]; then
+              echo "CIRCLE_TOKEN not set. Set a token to access the circle API in the env var CIRCLE_TOKEN";
+              exit 1;
+            fi
+
+
+            if [[ "<< parameters.run-on-branch >>" != "*" && "<<
+            parameters.run-on-branch >>" != "$CIRCLE_BRANCH" ]]; then
+              echo "Chosen to run only on << parameters.run-on-branch >> and currently we are on $CIRCLE_BRANCH, exiting";
+              exit 0;
+            fi
+
+            api_endpoint="api/v2/workflow/${CIRCLE_WORKFLOW_ID}/job"
+
+
+            mkdir -p /tmp/swissknife
+
+
+            # This is a global variable used to get return value for get_job_status
+
+            job_status=""
+
+            job_number=""
+
+
+            get_job_status() {
+              wf_url="https://circleci.com/$api_endpoint?circle-token=${CIRCLE_TOKEN}"
+              curl -f -s $wf_url > /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json
+              job_status=$(jq -r '.items[] | select(.name=="${job_name}") | .status' /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json)
+              job_number=$(jq -r '.items[] | select(.name=="${job_name}") | .job_number' /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json)
+            }
+
+
+
+            job_list="<< parameters.job-names >>"
+
+            for i in ${job_list//,/ }
+            do
+              current_wait_time=0
+
+              while true; do
+                get_job_status
+                if [[ "$job_status" == "success" || "$job_status" == "failed" || "$job_status" == "canceled" || "$job_status" == "" ]]; then
+                  echo "Its finally my turn. exiting"
+                  exit 0
+                else
+                  echo "Looks like the other guy ($job_number) is still not done ($job_status)."
+                  echo "Going to sleep for << parameters.sleep-time-between-checks >>"
+                  sleep << parameters.sleep-time-between-checks >>
+                  current_wait_time=$(( current_wait_time + << parameters.sleep-time-between-checks >> ))
+                fi
+
+                if (( $current_wait_time > << parameters.max-wait-time >> )); then
+                  if [[ "<< parameters.kill-gracefully >>" == "true" ]]; then
+                    echo "Proceeding with future steps";
+                    exit 0;
+                  else
+                    echo "Failing job by exiting forcefully";
+                    exit 1;
+                  fi
+                fi
+              done
+            done
+
 jobs:
-  build:
+  build_1:
     docker:
       - image: cimg/base:2022.04
     steps:
@@ -14,17 +120,30 @@ jobs:
           name: Store Results in Workspace
           command: echo "Store the results somewhere."
           when: always
+
+  build_2:
+    docker:
+      - image: cimg/base:2022.04
+    steps:
       - run:
-          name: Approve the Manual Approval Job
-          command: |
-            export APPROVAL_JOB_ID=$(curl --request GET --url "https://circleci.com/api/v2/workflow/${CIRCLE_WORKFLOW_ID}/job" --header "Circle-Token: ${CIRCLE_TOKEN}" | jq -r '.items[] | select(.name == "Approval Needed for Uploading Results") | .id')
-            curl --request POST "https://circleci.com/api/v2/workflow/${CIRCLE_WORKFLOW_ID}/approve/${APPROVAL_JOB_ID}" --header "Circle-Token: ${CIRCLE_TOKEN}"
+          name: Build Android App
+          command: echo "Building......"
+      - run:
+          name: Fail the build
+          command: echo "Simulate build failure." && false
+      - run:
+          name: Store Results in Workspace
+          command: echo "Store the results somewhere."
           when: always
 
   upload_results:
     machine: true
     resource_class: crowley-namespace/mind-the-gap
     steps:
+      - run:
+          name: Poll for jobs
+          wait_for_jobs:
+            job-names: "build_1,build_2"
       - run:
           name: Persist Workspace with Results
           command: echo "Attach Workspace......"
@@ -35,15 +154,10 @@ jobs:
 
 
 
-workflows:
+workflows:a
   main:
     jobs:
-      - build:
-          name: "Build Android App via Gradle"
-      - manual-approval:
-          name: "Approval Needed for Uploading Results"
-          type: approval
+      - build_1
+      - build_2
       - upload_results:
           name: "Upload Android App Build Logs"
-          requires:
-            - "Approval Needed for Uploading Results"
