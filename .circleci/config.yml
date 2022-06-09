@@ -60,17 +60,19 @@ commands:
 
 
             # # This is a global variable used to get return value for get_job_status
-            # job_status=""
+            job_status=""
 
-            # job_number=""
+            job_number=""
+
+            job_name=""
 
 
-            # get_job_status() {
-            #   wf_url="https://circleci.com/$api_endpoint?circle-token=${CIRCLE_TOKEN}"
-            #   curl -f -s $wf_url > /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json
-            #   job_status=$(jq -r '.items[] | select(.name=="${job_name}") | .status' /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json)
-            #   job_number=$(jq -r '.items[] | select(.name=="${job_name}") | .job_number' /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json)
-            # }
+            get_job_status() {
+              wf_url="https://circleci.com/$api_endpoint?circle-token=${CIRCLE_TOKEN}"
+              curl -f -s $wf_url > /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json
+              job_status=$(jq -r '.items[] | select(.name=="${job_name}") | .status' /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json)
+              job_number=$(jq -r '.items[] | select(.name=="${job_name}") | .job_number' /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json)
+            }
 
 
 
@@ -82,14 +84,6 @@ commands:
               job_status=""
               job_number=""
               current_wait_time=0
-
-              get_job_status() {
-                wf_url="https://circleci.com/$api_endpoint?circle-token=${CIRCLE_TOKEN}"
-                curl -f -s $wf_url > /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json
-                job_status=$(jq -r '.items[] | select(.name=="${job_name}") | .status' /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json)
-                job_number=$(jq -r '.items[] | select(.name=="${job_name}") | .job_number' /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json)
-              }
-
 
               echo "START: status: ($job_status) job_number: ($job_number) job_name: ($job_name) current_wait_time: ($current_wait_time)"
               echo "Current Job Checking: ${job_name}"
