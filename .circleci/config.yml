@@ -66,8 +66,8 @@ commands:
 
               wf_url="https://circleci.com/$api_endpoint?circle-token=${CIRCLE_TOKEN}"
               curl -f -s $wf_url > /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json
-              STATUS=$(jq -r '.items[] | select(.name=="$NAME_OF_JOB") | .status' /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json)
-              NUMBER=$(jq -r '.items[] | select(.name=="$NAME_OF_JOB") | .job_number' /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json)
+              STATUS=$(jq -r ".items[] | select(.name==\"${NAME_OF_JOB}\") | .status" /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json)
+              NUMBER=$(jq -r ".items[] | select(.name==\"${NAME_OF_JOB}\") | .job_number" /tmp/swissknife/wf_$CIRCLE_WORKFLOW_ID.json)
               echo "${STATUS} ${NUMBER}"
             }
 
