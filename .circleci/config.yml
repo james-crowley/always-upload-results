@@ -139,8 +139,8 @@ jobs:
           when: always
 
   upload_results:
-    machine: true
-    resource_class: crowley-namespace/mind-the-gap
+    docker:
+      - image: cimg/base:2022.04
     steps:
       - wait_for_jobs:
           job-names: "build_1,build_2"
