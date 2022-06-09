@@ -78,11 +78,13 @@ commands:
               job_number=""
 
               current_wait_time=0
-
+              echo "START: status: ($job_status) job_number: ($job_number) job_name: ($job_name) current_wait_time: ($current_wait_time)"
               echo "Current Job Checking: ${job_name}"
 
               while true; do
+                echo "BEFORE: status: ($job_status) job_number: ($job_number) job_name: ($job_name)"
                 get_job_status
+                echo "AFTER: status: ($job_status) job_number: ($job_number) job_name: ($job_name)"
                 if [[ "$job_status" == "success" || "$job_status" == "failed" || "$job_status" == "canceled" || "$job_status" == "" ]]; then
                   echo "Its finally my turn. exiting"
                   break
@@ -143,7 +145,7 @@ jobs:
       - image: cimg/base:2022.04
     steps:
       - wait_for_jobs:
-          job-names: "build_1,build_2"
+          job-names: "build_2,build_1"
       - run:
           name: Persist Workspace with Results
           command: echo "Attach Workspace......"
