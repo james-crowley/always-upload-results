@@ -60,6 +60,10 @@ commands:
 
 
             # This is a global variable used to get return value for get_job_status
+            job_status=""
+
+            job_number=""
+
 
             get_job_status() {
               wf_url="https://circleci.com/$api_endpoint?circle-token=${CIRCLE_TOKEN}"
@@ -74,10 +78,11 @@ commands:
 
             for job_name in ${job_list//,/ }
             do
+              # Reset job status, job number and wait time
               job_status=""
               job_number=""
-
               current_wait_time=0
+
               echo "START: status: ($job_status) job_number: ($job_number) job_name: ($job_name) current_wait_time: ($current_wait_time)"
               echo "Current Job Checking: ${job_name}"
 
