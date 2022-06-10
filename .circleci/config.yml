@@ -121,10 +121,18 @@ commands:
         description: If true it completes and lets future steps continue
         type: string
         default: "true"
-
+      when:
+        type: enum
+        enum: [
+          "always",
+          "on_success",
+          "on_fail"
+        ]
+        default: "on_success"
     steps:
       - run:
           name: Swissknife - Approve On Hold Job by Name
+          when: << parameters.when >>
           command: |
             if [ -z "$BASH" ]; then
               echo Bash not installed.
@@ -209,11 +217,9 @@ jobs:
       - run:
           name: Fail the build
           command: echo "Simulate build failure." && false
-      - run:
-          name: Store Results in Workspace
-          command: echo "Store the results somewhere."
-          when: always
-
+      - approve_jobs:
+          job-names: "manual-approval"
+  
   build_2:
     docker:
       - image: cimg/base:2022.04
@@ -224,8 +230,6 @@ jobs:
       - run:
           name: Sleeping for 60 secs
           command: echo "Sleeping for 60 secs" && sleep 60
-      - approve_jobs:
-          job-names: "manual-approval"
 
   upload_results:
     docker:
