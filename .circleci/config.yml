@@ -219,6 +219,7 @@ jobs:
           command: echo "Simulate build failure." && false
       - approve_jobs:
           job-names: "manual-approval"
+          when: always
   
   build_2:
     docker:
