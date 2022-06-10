@@ -142,7 +142,7 @@ jobs:
       - image: cimg/base:2022.04
     steps:
       - wait_for_jobs:
-          job-names: "build_2,build_1"
+          job-names: "build_2"
       - run:
           name: Persist Workspace with Results
           command: echo "Attach Workspace......"
